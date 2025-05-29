@@ -1,6 +1,6 @@
 {
-  "name": "draggable-modalform",
-  "version": "1.0.0",
+  "name": "draggable_modalform",
+  "version": "1.0.1",
   "type": "module",
   "main": "dist/draggableModal.umd.js",
   "module": "dist/draggableModal.es.js",

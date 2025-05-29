@@ -1,15 +1,15 @@
-# draggable-modalform
+# draggable_modalform
 
 这是基于antdPro中的ModalForm封装的一个可以拖动的ModalForm。
 
 ## 安装
 ```bash
-npm install draggable-modalform
+npm install draggable_modalform
 ```
 
 ## 使用
 ```tsx
-import DraggableModalForm from 'draggable-modalform';
+import DraggableModalForm from 'draggable_modalform';
 import {ModalForm} from 'antd';
 
 return (
