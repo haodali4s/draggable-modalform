@@ -22,75 +22,18 @@ const DraggableModal: React.FC<DraggableModalProps> = (props) => {
         const { top } = node.getBoundingClientRect();
         const regex = /(-?\d+\.?\d*)/g;
         const style = getComputedStyle(node.children[0]);
-        // const availableLeft =
-        //   parseFloat(style.paddingLeft ?? style.paddingLeft.match(regex)[0]) +
-        //   left;
+
         const availableTop =
           parseFloat(
             style.paddingTop ?? (style.paddingTop as string).match(regex)![0]
           ) + top;
-        // const availableRight =
-        //   right -
-        //   parseFloat(
-        //     style.paddingRight ?? style.paddingRight!.match(regex)![0],
-        //   );
-        // const availableBottom =
-        //   bottom -
-        //   parseFloat(
-        //     style.paddingBottom ?? style.paddingBottom!.match(regex)![0],
-        //   );
 
-        return (
-          // e.clientX > left - 10 &&
-          // e.clientX < right + 10 &&
-          e.clientY > top &&
-          // e.clientY < bottom + 10 &&
-          !(
-            // e.clientX > availableLeft + 10 &&
-            // e.clientX < availableRight - 10 &&
-            (e.clientY > availableTop)
-            // e.clientY < availableBottom - 10
-          )
-        );
+        return e.clientY > top && !(e.clientY > availableTop);
       };
-      const dragOver = () => {
-        if (drag) {
-          drag = false;
-          node.style.userSelect = "auto";
-          const regex = /(-?\d+\.?\d*)/g;
-          const matches = node.style.transform.match(regex);
-          if (matches && matches.length > 0) {
-            originX += parseFloat(matches[0]);
-            originY += parseFloat(matches[1]);
-          }
-          node.style.cursor = "default";
-          node.style.left = `${originX}px`;
-          node.style.top = `${originY}px`;
-          node.style.transform = "";
-          animationFrame && cancelAnimationFrame(animationFrame);
-        }
-      };
-
-      if (node) {
-        node.onmousedown = (e) => {
-          if (window.innerHeight > node.offsetHeight + 100 && canBeDragged(e)) {
-            if (e.buttons === 1) {
-              drag = true;
-              startX = e.clientX;
-              startY = e.clientY;
-              const { left, top, right, bottom } = node.getBoundingClientRect();
-              maxX = [-left, window.innerWidth - right];
-              maxY = [-top, window.innerHeight - bottom];
-            }
-          }
-        };
-        document.onmousemove = (e) => {
-          if (canBeDragged(e)) {
-            node.style.cursor = "move";
-          } else {
-            if (!drag) node.style.cursor = "default";
-          }
-          if (drag && e.buttons === 1) {
+      const dragging = (e: MouseEvent) => {
+        if (drag && e.buttons === 1) {
+          document.body.style.cursor = "move";
+          animationFrame = requestAnimationFrame(() => {
             node.style.userSelect = "none";
             let xMove = e.clientX - startX;
             let yMove = e.clientY - startY;
@@ -106,14 +49,59 @@ const DraggableModal: React.FC<DraggableModalProps> = (props) => {
             if (yMove > maxY[1]) {
               yMove = maxY[1];
             }
-            animationFrame = requestAnimationFrame(() => {
-              node.style.transform = `translate(${xMove}px, ${yMove}px)`;
-            });
+            node.style.transform = `translate(${xMove}px, ${yMove}px)`;
+          });
+        }
+      };
+      const dragOver = () => {
+        if (drag) {
+          drag = false;
+          document.body.style.cursor = "default";
+          node.style.cursor = "default";
+          node.style.userSelect = "auto";
+          const regex = /(-?\d+\.?\d*)/g;
+          const matches = node.style.transform.match(regex);
+          if (matches && matches.length > 0) {
+            originX += parseFloat(matches[0]);
+            originY += parseFloat(matches[1]);
+            node.style.left = `${originX}px`;
+            node.style.top = `${originY}px`;
+          }
+          document.onmouseup = null;
+          document.onmousemove = null;
+
+          node.style.transform = "";
+          animationFrame && cancelAnimationFrame(animationFrame);
+        }
+      };
+      if (node) {
+        node.addEventListener("mousemove", (e: MouseEvent) => {
+          if (drag || canBeDragged(e)) {
+            node.style.cursor = "move";
+          } else {
+            node.style.cursor = "default";
+          }
+        });
+        node.onmousedown = (e) => {
+          if (canBeDragged(e)) {
+            if (e.buttons === 1) {
+              drag = true;
+              startX = e.clientX;
+              startY = e.clientY;
+              const { left, top, right, bottom } = node.getBoundingClientRect();
+              maxX = [
+                Math.min(-left, 0),
+                Math.max(window.innerWidth - right, 0),
+              ];
+              maxY = [
+                Math.min(-top, 0),
+                Math.max(window.innerHeight - bottom, 0),
+              ];
+              document.onmousemove = dragging;
+              document.onmouseup = dragOver;
+            }
           }
         };
-        node.onmouseup = dragOver;
-        // document.onmouseleave = dragOver;
-        window.onblur = dragOver;
       }
     }
   }, []);
